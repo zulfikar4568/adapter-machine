@@ -1,89 +1,58 @@
-# Typescript Starter
+# Adapter Machine Node JS
 
-## Create Package
-```
-yarn init -y
-```
+1. Ethernet IP
+```js
+const { Controller, Tag, EthernetIP } = require("ethernet-ip");
+const { DINT, INT } = EthernetIP.CIP.DataTypes.Types;
 
-## Install dependencies
-```
-typescript ts-node nodemon @types/node
-```
+const PLC = new Controller();
+const myTag = new Tag("TestNodered"); // Controller Scope Tag
+const cobaWrite = new Tag("BitNodered.0", null, INT); // Controller Scope Tag
+PLC.subscribe(new Tag("TestNodered"));
 
-## Add ts config
-```
-npx tsc --init
-```
+PLC.connect("192.168.3.98", 1).then(async () => {
+    // cobaWrite.value = 1;
+    // await PLC.writeTag(cobaWrite);
+    // await PLC.readTag(myTag);
+    // console.log(myTag.value);
+    // console.log(PLC.properties);
+    const { name } = PLC.properties;
+ 
+    // Log Connected to Console
+    console.log(`\n\nConnected to PLC ${name}...\n`);
+ 
+    // Begin Scanning Subscription Group
+    PLC.scan();
+});
 
-## Create Source folder src/index.ts
-```ts
-function greet(name: string): void {
-  console.log("Hello", name);
-}
-
-const readerName = "all";
-
-greet(readerName);
-```
-
-## Add nodemon config
-```json
-{
-  "restartable": "rs",
-  "ignore": [".git", "node_modules/", "dist/", "coverage/"],
-  "watch": ["src/"],
-  "execMap": {
-    "ts": "node -r ts-node/register"
-  },
-  "env": {
-    "NODE_ENV": "development"
-  },
-  "ext": "js,json,ts"
-}
+PLC.forEach((tag: { on: (arg0: string, arg1: (tag: any, lastValue: any) => void) => void; }) => {
+  tag.on("Changed", (tag: { name: any; value: any; }, lastValue: any) => {
+      console.log(`${tag.name} changed from ${lastValue} -> ${tag.value}`);
+  });
+})
 ```
 
-- **restartable** — a command we can use to restart the program manually.
-- **ignore** — list of files we don’t want to trigger a program restart when changing.
-- **watch** — list of paths we do want to trigger a program restart when changing.
-- **execMap** — a mapping between a file type/extension to a runtime.
-- **env** — environment variables to include
-- **ext** — the file extensions Nodemon monitores
 
-## Add `script` in `package.json`
-```json
-{
-  "scripts": {
-    "dev": "nodemon --config nodemon.json src/index.ts",
-    "dev:debug": "nodemon --config nodemon.json --inspect-brk src/index.ts"
-  }
-}
-```
+2. Modbus TCP
+```js
+// create an empty modbus client
+var ModbusRTU = require("modbus-serial");
+var client = new ModbusRTU();
 
-## Debugging with vscode
-Create `.vscode/launch.json`
-```json
-{
-  "version": "0.2.0",
-  "configurations": [
-    {
-      "type": "node",
-      "request": "attach",
-      "name": "Attach",
-      "restart": true,
-      "processId": "${command:PickProcess}"
-    }
-  ]
-}
-```
+// open connection to a tcp line
+client.connectTCP("192.168.3.98", { port: 502 });
+client.setID(1);
 
-## Running the ts
+// read the values of 10 registers starting at address 0
+// on device number 1. and log the values to the console.
+let i: number = 0;
+setInterval(function() {
+  client.writeRegisters(10, [0 , i++])
+    .then((red: any) => {
+      console.log(red)
+    });
+  // client.readHoldingRegisters(0, 100, function(err: any, data: { data: any; }) {
+  //     console.log(data.data);
+  // });
+}, 500);
 ```
-yarn dev
-```
-
-## Running with debugger
-```
-yarn dev:debug
-```
-
-[Source: Medium](https://levelup.gitconnected.com/typescript-nodemon-the-ultimate-setup-7200aa60cc8b)
