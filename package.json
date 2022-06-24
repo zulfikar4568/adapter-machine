@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "ethernet-ip": "^1.2.5",
-    "modbus-serial": "^8.0.5"
+    "modbus-serial": "^8.0.5",
+    "node-opcua": "^2.70.3"
   }
 }
